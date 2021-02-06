@@ -8,16 +8,20 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Service
 public class FileStorageService {
     private final Path uploadDir;
+    Logger logger = Logger.getLogger("sample");
 
     @Autowired
     public FileStorageService(FileStorageProperties fileStorageProperties) {
@@ -40,7 +44,9 @@ public class FileStorageService {
         try {
 //            ByteBuffer buffer = ByteBuffer.wrap(file.getBytes());
 //            String str = buffer.array().toString();
-            s3.putObject(objectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+            PutObjectResponse response = s3.putObject(objectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+            logger.info("" + response.sdkHttpResponse().statusCode());
+            logger.info(response.sdkHttpResponse().statusText().orElse(""));
             //s3.putObject(objectRequest, RequestBody.fromByteBuffer(buffer));
         } catch (IOException e) {
             throw new FileStorageException("Could not store file " + fileName);
