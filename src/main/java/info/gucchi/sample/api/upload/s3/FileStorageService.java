@@ -1,5 +1,6 @@
-package info.gucchi.sample.api.upload;
+package info.gucchi.sample.api.upload.s3;
 
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -11,11 +12,9 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Service
@@ -33,7 +32,7 @@ public class FileStorageService {
         }
     }
 
-    public String storeFile(MultipartFile file) {
+    public StoreFileResponse storeFile(MultipartFile file) {
         String fileName = StringUtils.cleanPath(file.getOriginalFilename());
 
         Region region = Region.AP_NORTHEAST_1;
@@ -47,11 +46,11 @@ public class FileStorageService {
             PutObjectResponse response = s3.putObject(objectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
             logger.info("" + response.sdkHttpResponse().statusCode());
             logger.info(response.sdkHttpResponse().statusText().orElse(""));
+            return new StoreFileResponse(fileName, response);
             //s3.putObject(objectRequest, RequestBody.fromByteBuffer(buffer));
         } catch (IOException e) {
             throw new FileStorageException("Could not store file " + fileName);
         }
-        return fileName;
 //        try {
 //            if (fileName.contains("..")) {
 //                throw new FileStorageException("invalid path");
@@ -62,6 +61,17 @@ public class FileStorageService {
 //        } catch (IOException e) {
 //            throw new FileStorageException("Could not store file " + fileName);
 //        }
+    }
+
+    @Data
+    public class StoreFileResponse {
+        private String fileName;
+        private PutObjectResponse s3response;
+
+        public StoreFileResponse(String fileName, PutObjectResponse response) {
+            this.fileName = fileName;
+            this.s3response = response;
+        }
     }
 
 }
