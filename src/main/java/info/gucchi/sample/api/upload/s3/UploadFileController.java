@@ -15,9 +15,13 @@ public class UploadFileController {
     private FileStorageService fileStorageService;
 
     @PostMapping("/upload")
-    public UploadResponse uploadFile(@RequestParam("file") MultipartFile file) {
+    public UploadResponse uploadFile(@RequestParam("token") String token, @RequestParam("file") MultipartFile file) {
         Logger logger = Logger.getLogger("upload");
         logger.info("/upload:" + file.getOriginalFilename());
+        logger.info("token:" + token);
+        if (System.getenv("TOKEN") != token) {
+            throw new UnauthorizedException("invalid token");
+        }
         FileStorageService.StoreFileResponse response = fileStorageService.storeFile(file);
         String fileName = response.getFileName();
         int code = response.getS3response().sdkHttpResponse().statusCode();
